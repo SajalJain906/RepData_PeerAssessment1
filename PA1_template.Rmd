@@ -1,25 +1,110 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "PA1_template"
+author: "Sajal Jain"
+date: "23/08/2020"
+output: html_document
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
-## Loading and preprocessing the data
+## Reading the dataset
 
+This is a report of analysis of the "activity.csv" dataset.
 
+```{r read}
+data <- read.csv("activity.csv")
+head(data)
+```
 
-## What is mean total number of steps taken per day?
+## Processing the dataset
 
+This is to change the format of the date from character format to Date format.
 
+```{r date}
+data$date <- as.Date(data$date,format="%Y-%m-%d")
+head(data)
+```
 
-## What is the average daily activity pattern?
+## Plotting histogram of total number of steps per day
 
+aggregate function is used to sun the number of steps in each given day.
 
+```{r hist}
+steps_in_a_day <- aggregate(steps~date,data,sum)
+with(steps_in_a_day,hist(steps,breaks = 10))
+```
 
-## Imputing missing values
+## Mean and Median of steps in a day
 
+```{r mean_median}
+aggregate(steps~date,data,mean)
+aggregate(steps~date,data,median)
+```
 
+Median of the steps on all days is 0 because for most of the 5 minutes interval, the person is at rest, i.e number of steps is 0.
 
-## Are there differences in activity patterns between weekdays and weekends?
+## Mean by interval in the day
+
+aggregate function is used again to calculate average number of steps in a given time interval. The interval is given the form of "2150" as in 21 hours and 50 minutes. Hence, I used integer operations to convert this into minutes as 21*60+50 = 1310 minutes. Total number of minutes in a day is 1440.
+
+```{r time_series}
+steps_average_by_interval <- aggregate(steps~interval,data,mean)
+steps_average_by_interval$minutes <- (steps_average_by_interval$interval%/%100)*60 +steps_average_by_interval$interval%%100
+with(steps_average_by_interval,plot(minutes,steps,type="l"))
+```
+
+## Time interval with maximum average number of steps
+
+```{r max_interval}
+max_interval <- which(steps_average_by_interval$steps == max(steps_average_by_interval$steps))
+steps_average_by_interval$interval[max_interval]
+```
+
+## Total missing values in the dataset
+
+```{r total_na}
+sum(is.na(data))
+```
+
+## Imputing values to create a new dataset
+
+ifelse() function has been used. If the value is missig, the steps has been set as average number of steps in that particular time interval.
+
+```{r new_dataset}
+test <- data
+test$steps <- ifelse(is.na(test$steps),steps_average_by_interval$steps[steps_average_by_interval$interval==test$interval] , test$steps)
+```
+
+## Plots and analysis on the new dataset
+
+```{r new_dataset_analysis}
+steps_in_a_day_imputed <- aggregate(steps~date,test,sum)
+with(steps_in_a_day_imputed,hist(steps,breaks = 10))
+
+aggregate(steps~date,test,mean)
+aggregate(steps~date,test,median)
+```
+
+Mean of steps with days having NA values increased. Median of steps for a day remained at 0 except for 1st days which shows a non-zero value because most of the data on that day is imputed based on average.
+
+## Creating a new column of factor varible weekday and weekend
+
+```{r weekday}
+test$weekday <- weekdays(test$date)
+test$weekday <- test$weekday == "Saturday" | test$weekday == "Sunday"
+test$weekday <- factor(test$weekday,labels = c("weekday","weekend"))
+```
+
+## Plotting two time series plots of weekdays and weekend
+
+```{r plot_time_series_by_weekday}
+steps_average_by_interval_weekdays <- aggregate(steps~interval,subset(test,weekday=="weekday"),mean)
+steps_average_by_interval_weekend <- aggregate(steps~interval,subset(test,weekday=="weekend"),mean)
+
+par(mfrow=c(1,2))
+
+plot(steps_average_by_interval$minutes,steps_average_by_interval_weekdays$steps,type="l",ylim = c(0,250))
+plot(steps_average_by_interval$minutes,steps_average_by_interval_weekend$steps,type="l",ylim = c(0,250))
+```
