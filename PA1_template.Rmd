@@ -94,7 +94,7 @@ test$weekday <- factor(test$weekday,labels = c("weekday","weekend"))
 
 ## Plotting two time series plots of weekdays and weekend
 
-```{r plot_time_series_by_weekday}
+```{r plot_time_series_by_weekday,fig.width=8}
 steps_average_by_interval_weekdays <- aggregate(steps~interval,subset(test,weekday=="weekday"),mean)
 steps_average_by_interval_weekend <- aggregate(steps~interval,subset(test,weekday=="weekend"),mean)
 
