@@ -1,9 +1,4 @@
----
-title: "PA1_template"
-author: "Sajal Jain"
-date: "23/08/2020"
-output: html_document
----
+# PA1_template
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
